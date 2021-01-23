@@ -4,7 +4,7 @@
 #include <sqlite3.h>
 
 /* TODO: Find a way to make a raw cast from Swift directly */
-sqlite3_destructor_type const sqlite_transient = SQLITE_TRANSIENT;
+extern sqlite3_destructor_type const sqlite_transient;
 
 /* CSQLITE_H */
 #endif
