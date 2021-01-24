@@ -1,6 +1,6 @@
 import CSQLite
 
-struct SQLiteError : Error {
+public struct SQLiteError : Error {
 	let errorCode: Int32
 
 	var localizedDescription: String {
