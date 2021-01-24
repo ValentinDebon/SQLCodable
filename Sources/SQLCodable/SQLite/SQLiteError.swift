@@ -1,9 +1,9 @@
 import CSQLite
 
 public struct SQLiteError : Error {
-	let errorCode: Int32
+	public let errorCode: Int32
 
-	var localizedDescription: String {
+	public var localizedDescription: String {
 		String(cString: sqlite3_errstr(self.errorCode))
 	}
 }

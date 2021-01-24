@@ -16,13 +16,19 @@ final class SQLCodableTests: XCTestCase {
 
 		try create.setup(with: Foo(key: 1, value: "bar")).step()
 
-		guard let foo: Foo = try read.setup(with: 1).step() else {
+		guard let foo1: Foo = try read.setup(with: 1).step() else {
 			XCTFail("Unable to read Foo")
 			return
 		}
 
-		try update.setup(with: Foo(key: foo.key, value: "nop")).step()
-		try delete.setup(with: foo.key).step()
+		try update.setup(with: Foo(key: foo1.key, value: "nop")).step()
+
+		guard let foo2: Foo = try read.setup(with: 1).step() else {
+			XCTFail("Unable to read Foo")
+			return
+		}
+
+		try delete.setup(with: foo2.key).step()
 	}
 
 	func testSQLite() {
