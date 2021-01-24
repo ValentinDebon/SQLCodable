@@ -27,6 +27,7 @@ final class SQLiteStatement : SQLStatement {
 
 	func setup<I>(with input: I) throws -> Self where I : Encodable {
 
+		sqlite3_reset(self.prepared)
 		sqlite3_clear_bindings(self.prepared)
 
 		try input.encode(to: SQLiteEncoder(prepared: self.prepared))
@@ -41,7 +42,6 @@ final class SQLiteStatement : SQLStatement {
 		case SQLITE_ROW:
 			return try O(from: SQLiteDecoder(prepared: self.prepared))
 		case SQLITE_DONE:
-			sqlite3_reset(self.prepared)
 			return nil
 		default:
 			throw SQLiteError(errorCode: errorCode)
