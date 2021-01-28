@@ -13,7 +13,7 @@ your type in a prepared statement, and decodes each row using the parameters/col
 Let's say you're a teacher and want to keep track of every students and the average of their marks for the semester.
 The following sample illustrates how to create a DAO and interface for and SQLite-backed database.
 
-```{swift}
+```swift
 import SQLiteCodable
 import SQLCodable
 
@@ -62,6 +62,5 @@ try studentDAO.add(student: Student(firstname: "Raymond", lastname: "Dufayel", a
 
 try print(studentDAO.findStudent(firstname: "Dominique", lastname: "Bretodeau")!)
 try print(studentDAO.validStudents())
-
 ```
 
