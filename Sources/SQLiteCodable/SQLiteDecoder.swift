@@ -115,6 +115,7 @@ fileprivate struct SQLiteKeyedDecodingContainer<Key> : KeyedDecodingContainerPro
 	}
 
 	func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
+		// TODO
 		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding at key \(key)")
 		throw DecodingError.typeMismatch(type, decodingContext)
 	}
@@ -238,6 +239,7 @@ fileprivate struct SQLiteUnkeyedDecodingContainer : UnkeyedDecodingContainer {
 	}
 
 	mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+		// TODO
 		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
 		throw DecodingError.typeMismatch(type, decodingContext)
 	}
@@ -344,6 +346,7 @@ fileprivate struct SQLiteSingleValueDecodingContainer : SingleValueDecodingConta
 	}
 
 	func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+		// TODO
 		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
 		throw DecodingError.typeMismatch(type, decodingContext)
 	}
