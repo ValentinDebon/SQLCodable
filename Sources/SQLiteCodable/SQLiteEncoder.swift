@@ -21,7 +21,7 @@ fileprivate struct SQLiteKeyedEncodingContainer<Key> : KeyedEncodingContainerPro
 		let errorCode = binding(self.prepared, parameterIndex)
 
 		if errorCode != SQLITE_OK {
-			throw SQLiteError(errorCode: errorCode)
+			throw SQLiteError(rawValue: errorCode)!
 		}
 	}
 
@@ -88,8 +88,12 @@ fileprivate struct SQLiteKeyedEncodingContainer<Key> : KeyedEncodingContainerPro
 	}
 
 	mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
-		let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding for key \(key)")
-		throw EncodingError.invalidValue(key, encodingContext)
+		if let losslessStringValue = value as? LosslessStringConvertible {
+			try self.encode(losslessStringValue.description, forKey: key)
+		} else {
+			let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding for key \(key)")
+			throw EncodingError.invalidValue(key, encodingContext)
+		}
 	}
 
 	mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -120,7 +124,7 @@ fileprivate struct SQLiteUnkeyedEncodingContainer : UnkeyedEncodingContainer, Si
 		let errorCode = binding(self.prepared, parameterIndex)
 
 		if errorCode != SQLITE_OK {
-			throw SQLiteError(errorCode: errorCode)
+			throw SQLiteError(rawValue: errorCode)!
 		}
 
 		self.count += 1
@@ -189,8 +193,12 @@ fileprivate struct SQLiteUnkeyedEncodingContainer : UnkeyedEncodingContainer, Si
 	}
 
 	mutating func encode<T>(_ value: T) throws where T : Encodable {
-		let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
-		throw EncodingError.invalidValue(value, encodingContext)
+		if let losslessStringValue = value as? LosslessStringConvertible {
+			try self.encode(losslessStringValue.description)
+		} else {
+			let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
+			throw EncodingError.invalidValue(value, encodingContext)
+		}
 	}
 
 	mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -212,7 +220,7 @@ fileprivate struct SQLiteSingleValueEncodingContainer : SingleValueEncodingConta
 
 	private func check(binding errorCode: Int32) throws {
 		if errorCode != SQLITE_OK {
-			throw SQLiteError(errorCode: errorCode)
+			throw SQLiteError(rawValue: errorCode)!
 		}
 	}
 
@@ -279,6 +287,7 @@ fileprivate struct SQLiteSingleValueEncodingContainer : SingleValueEncodingConta
 	}
 
 	mutating func encode<T>(_ value: T) throws where T : Encodable {
+		// TODO
 		let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
 		throw EncodingError.invalidValue(value, encodingContext)
 	}

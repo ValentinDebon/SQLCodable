@@ -1,5 +1,5 @@
 
 public protocol SQLDatabase : AnyObject {
-	func makeStatement(query: StaticString) throws -> SQLStatement
+	func statement(_ query: StaticString) -> SQLStatement
 }
 
