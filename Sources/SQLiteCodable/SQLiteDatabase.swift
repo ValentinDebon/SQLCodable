@@ -28,10 +28,15 @@ public final class SQLiteDatabase : SQLDatabase {
 		} else {
 			var pStmt: OpaquePointer?
 
-			let errorCode = queryString.withCString { queryCString in
-				sqlite3_prepare_v3(self.connection, queryCString,
-					Int32(queryString.utf8.count + 1), UInt32(SQLITE_PREPARE_PERSISTENT),
-					&pStmt, nil)
+			let errorCode: Int32 = queryString.withCString { queryCString in
+				if #available(iOS 12.0, tvOS 12.0, watchOS 5.0, *) {
+					return sqlite3_prepare_v3(self.connection, queryCString,
+									   Int32(queryString.utf8.count + 1), UInt32(SQLITE_PREPARE_PERSISTENT),
+									   &pStmt, nil)
+				} else {
+					return sqlite3_prepare_v2(self.connection, queryCString,
+									   Int32(queryString.utf8.count), &pStmt, nil)
+				}
 			}
 
 			guard errorCode == SQLITE_OK else {
