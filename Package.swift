@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
 	name: "SQLCodable",
-	platforms: [ .macOS(.v10_15), .iOS(.v12), .linux ],
+	platforms: [ .macOS(.v10_15), .iOS(.v12), .tvOS(.v12), .watchOS(.v5) ],
 	products: [
 		.library(
 			name: "SQLCodable",
