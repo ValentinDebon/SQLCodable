@@ -15,6 +15,8 @@ public final class SQLiteDatabase : SQLDatabase {
 
 		self.preparedStatements = [:]
 		self.connection = connection!
+
+		sqlite3_extended_result_codes(self.connection, 1)
 	}
 
 	deinit {
@@ -35,7 +37,7 @@ public final class SQLiteDatabase : SQLDatabase {
 									   &pStmt, nil)
 				} else {
 					return sqlite3_prepare_v2(self.connection, queryCString,
-									   Int32(queryString.utf8.count), &pStmt, nil)
+									   Int32(queryString.utf8.count + 1), &pStmt, nil)
 				}
 			}
 
