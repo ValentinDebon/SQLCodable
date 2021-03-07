@@ -1,9 +1,9 @@
-//
-//  SQLite.swift
-//  SQLCodableTests
-//
-//  Created by Valentin Debon on 06/03/2021.
-//
+/*
+	SQLite.swift
+	Copyright (c) 2020, Valentin Debon
+	This file is part of SQLCodableTests
+	subject the BSD 3-Clause License, see LICENSE
+*/
 
 struct Foo : Codable {
 	let key: Int

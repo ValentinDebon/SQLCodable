@@ -1,3 +1,10 @@
+/*
+	SQLiteStatement.swift
+	Copyright (c) 2020, Valentin Debon
+	This file is part of SQLiteCodable
+	subject the BSD 3-Clause License, see LICENSE
+*/
+
 import SQLCodable
 import CSQLite
 
