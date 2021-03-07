@@ -88,9 +88,10 @@ fileprivate struct SQLiteKeyedEncodingContainer<Key> : KeyedEncodingContainerPro
 	}
 
 	mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
-		if let losslessStringValue = value as? LosslessStringConvertible {
+		switch value {
+		case let losslessStringValue as LosslessStringConvertible:
 			try self.encode(losslessStringValue.description, forKey: key)
-		} else {
+		default:
 			let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding for key \(key)")
 			throw EncodingError.invalidValue(key, encodingContext)
 		}
@@ -193,9 +194,10 @@ fileprivate struct SQLiteUnkeyedEncodingContainer : UnkeyedEncodingContainer, Si
 	}
 
 	mutating func encode<T>(_ value: T) throws where T : Encodable {
-		if let losslessStringValue = value as? LosslessStringConvertible {
+		switch value {
+		case let losslessStringValue as LosslessStringConvertible:
 			try self.encode(losslessStringValue.description)
-		} else {
+		default:
 			let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
 			throw EncodingError.invalidValue(value, encodingContext)
 		}
@@ -287,12 +289,17 @@ fileprivate struct SQLiteSingleValueEncodingContainer : SingleValueEncodingConta
 	}
 
 	mutating func encode<T>(_ value: T) throws where T : Encodable {
-		// TODO
-		let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
-		throw EncodingError.invalidValue(value, encodingContext)
+		switch value {
+		case let losslessStringValue as LosslessStringConvertible:
+			try self.encode(losslessStringValue.description)
+		default:
+			let encodingContext = EncodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported encoding")
+			throw EncodingError.invalidValue(value, encodingContext)
+		}
 	}
 }
 
+/// Encoder for `SQLiteStatement`.
 struct SQLiteEncoder : Encoder {
 	let codingPath: [CodingKey] = []
 	let userInfo: [CodingUserInfoKey : Any] = [:]

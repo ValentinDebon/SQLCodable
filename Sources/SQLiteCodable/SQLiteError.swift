@@ -1,5 +1,10 @@
 import CSQLite
 
+/**
+	Enumeration of every SQLite error.
+
+	- Note: The list should be exhaustive for sqlite `3.32.3`. Be careful for next releases.
+*/
 public enum SQLiteError : Int32, Error {
 	case ok = 0
 
