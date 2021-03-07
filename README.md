@@ -53,7 +53,7 @@ final class StudentDAO : SQLDataAccessObject {
 	}
 }
 
-let studentDAO = try StudentDAO(sqliteDatabase: SQLiteDatabase())
+let studentDAO = try StudentDAO(database: SQLiteDatabase())
 
 try studentDAO.add(student: Student(firstname: "Nino", lastname: "Quincampoix", average:  9.0))
 try studentDAO.add(student: Student(firstname: "Raphaël", lastname: "Poulain", average: 7.0))

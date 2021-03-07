@@ -1,3 +1,9 @@
+/*
+	SQLDatabase.swift
+	Copyright (c) 2020, Valentin Debon
+	This file is part of SQLCodable
+	subject the BSD 3-Clause License, see LICENSE
+*/
 
 /// Used to implement a Database backend.
 public protocol SQLDatabase : AnyObject {
