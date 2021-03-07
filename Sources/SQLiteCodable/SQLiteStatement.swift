@@ -1,6 +1,15 @@
 import SQLCodable
 import CSQLite
 
+/**
+	Internal implementation of `SQLStatement`.
+
+	Each instance keep no real information except a strong reference to the database and the query string.
+	It allows the user to purge the cache whenever he wants, and the statements wil only request them when needed.
+	Anyway, each `sqlite3_stmt` is shared by the database, making it impossible to keep two identical queries requests at the same time.
+
+	- SeeAlso: `SQLiteDatabase`
+*/
 struct SQLiteStatement : SQLStatement {
 	private let database: SQLiteDatabase
 	private let queryString: String

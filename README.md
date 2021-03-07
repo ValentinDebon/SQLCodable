@@ -26,8 +26,8 @@ struct Student : Codable {
 final class StudentDAO : SQLDataAccessObject {
 	let database: SQLDatabase
 
-	init(sqliteDatabase: SQLiteDatabase) throws {
-		self.database = sqliteDatabase
+	init(database: SQLDatabase) throws {
+		self.database = database
 
 		try self.query("""
 			create table if not exists students (
@@ -40,15 +40,15 @@ final class StudentDAO : SQLDataAccessObject {
 		""").next()
 	}
 
-	func add(student: Student) {
+	func add(student: Student) throws {
 		try self.query("insert into students values (:firstname, :lastname, :average)", with: student).next()
 	}
 
-	func findStudent(firstname: String, lastname: String) -> Student? {
+	func findStudent(firstname: String, lastname: String) throws -> Student? {
 		try self.query("select * from students where firstname = ?1 and lastname = ?2", with: firstname, lastname).next()
 	}
 
-	func validStudents(minimum average: Double = 10.0) -> [Student] {
+	func validStudents(minimum average: Double = 10.0) throws -> [Student] {
 		try Array(self.query("select * from students where average >= ?1 order by average desc", with: average))
 	}
 }

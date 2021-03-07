@@ -1,70 +1,23 @@
-import XCTest
-@testable import SQLCodable
 @testable import SQLiteCodable
-
-// Test of the README sample
-
-struct Student : Codable {
-	struct PrimaryKey : Codable {
-		let firstname: String
-		let lastname: String
-	}
-
-	let firstname: String
-	let lastname: String
-	let average: Double
-}
-
-final class StudentDAO : SQLDataAccessObject {
-	let database: SQLDatabase
-
-	init(sqliteDatabase: SQLiteDatabase) throws {
-		self.database = sqliteDatabase
-
-		try self.query("""
-			create table if not exists students (
-				firstname text,
-				lastname text,
-				average real,
-
-				primary key (firstname, lastname)
-			)
-		""").next()
-	}
-
-	func add(student: Student) throws {
-		try self.query("insert into students values (:firstname, :lastname, :average)", with: student).next()
-	}
-
-	func findStudent(firstname: String, lastname: String) throws -> Student? {
-		try self.query("select * from students where firstname = ?1 and lastname = ?2", with: firstname, lastname).next()
-	}
-
-	func validStudents(minimum average: Double = 10.0) throws -> [Student] {
-		try Array(self.query("select * from students where average >= ?1 order by average desc", with: average))
-	}
-}
-
-// Basic tests for SQLite
-
-struct Foo : Codable {
-	let key: Int
-	let value: String
-}
+@testable import SQLCodable
+import XCTest
 
 final class SQLCodableTests: XCTestCase {
 
-	func testREADMESample() {
+	func testREADME() {
 		do {
-			let studentDAO = try StudentDAO(sqliteDatabase: SQLiteDatabase())
+			let studentDAO = try StudentDAO(database: SQLiteDatabase())
 
 			try studentDAO.add(student: Student(firstname: "Nino", lastname: "Quincampoix", average:  9.0))
 			try studentDAO.add(student: Student(firstname: "Raphaël", lastname: "Poulain", average: 7.0))
 			try studentDAO.add(student: Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0))
 			try studentDAO.add(student: Student(firstname: "Raymond", lastname: "Dufayel", average: 17.0))
 
-			try print(studentDAO.findStudent(firstname: "Dominique", lastname: "Bretodeau")!)
-			try print(studentDAO.validStudents())
+			try XCTAssertEqual(studentDAO.findStudent(firstname: "Dominique", lastname: "Bretodeau"),
+							   Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0))
+			try XCTAssertEqual(studentDAO.validStudents(),
+							   [Student(firstname: "Raymond", lastname: "Dufayel", average: 17.0),
+								Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0)])
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
@@ -119,7 +72,7 @@ final class SQLCodableTests: XCTestCase {
 	}
 
 	static var allTests = [
-		("testREADMESample", testREADMESample),
+		("testREADME", testREADME),
 		("testSQLite", testSQLite),
 	]
 }

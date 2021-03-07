@@ -115,9 +115,19 @@ fileprivate struct SQLiteKeyedDecodingContainer<Key> : KeyedDecodingContainerPro
 	}
 
 	func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
-		// TODO
-		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding at key \(key)")
-		throw DecodingError.typeMismatch(type, decodingContext)
+		switch T.self {
+		case let losslessStringConvertibleType as LosslessStringConvertible.Type:
+			let description = try self.decode(String.self, forKey: key)
+
+			guard let value = losslessStringConvertibleType.init(description) else {
+				throw DecodingError.dataCorruptedError(forKey: key, in: self, debugDescription: "Unable to decode LosslessStringConvertible value: \(description)")
+			}
+
+			return value as! T
+		default:
+			let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding at key \(key)")
+			throw DecodingError.typeMismatch(type, decodingContext)
+		}
 	}
 
 	func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -239,9 +249,19 @@ fileprivate struct SQLiteUnkeyedDecodingContainer : UnkeyedDecodingContainer {
 	}
 
 	mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
-		// TODO
-		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
-		throw DecodingError.typeMismatch(type, decodingContext)
+		switch T.self {
+		case let losslessStringConvertibleType as LosslessStringConvertible.Type:
+			let description = try self.decode(String.self)
+
+			guard let value = losslessStringConvertibleType.init(description) else {
+				throw DecodingError.dataCorruptedError(in: self, debugDescription: "Unable to decode LosslessStringConvertible value: \(description)")
+			}
+
+			return value as! T
+		default:
+			let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
+			throw DecodingError.typeMismatch(type, decodingContext)
+		}
 	}
 
 	mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -346,12 +366,23 @@ fileprivate struct SQLiteSingleValueDecodingContainer : SingleValueDecodingConta
 	}
 
 	func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
-		// TODO
-		let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
-		throw DecodingError.typeMismatch(type, decodingContext)
+		switch T.self {
+		case let losslessStringConvertibleType as LosslessStringConvertible.Type:
+			let description = try self.decode(String.self)
+
+			guard let value = losslessStringConvertibleType.init(description) else {
+				throw DecodingError.dataCorruptedError(in: self, debugDescription: "Unable to decode LosslessStringConvertible value: \(description)")
+			}
+
+			return value as! T
+		default:
+			let decodingContext = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unsupported decoding")
+			throw DecodingError.typeMismatch(type, decodingContext)
+		}
 	}
 }
 
+/// Decoder for `SQLiteStatement`.
 struct SQLiteDecoder : Decoder {
 	let codingPath: [CodingKey] = []
 	let userInfo: [CodingUserInfoKey : Any] = [:]

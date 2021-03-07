@@ -1,10 +1,21 @@
 import SQLCodable
 import CSQLite
 
+/**
+	SQLite Database.
+
+	`SQLDatabase` implemented using the `CSQLite` C-interface.
+*/
 public final class SQLiteDatabase : SQLDatabase {
 	private var preparedStatements: [String : OpaquePointer]
 	private let connection: OpaquePointer
 
+	/**
+		Create an sqlite database from a file or in-memory.
+
+		- Parameter filename: File in which the database is created, or `:memory:` for an in-memory database. Default is `:memory:`.
+		- Throws: `SQLiteError` if unable to open `filename`.
+	*/
 	public init(filename: String = ":memory:") throws {
 		var connection: OpaquePointer?
 
@@ -24,6 +35,14 @@ public final class SQLiteDatabase : SQLDatabase {
 		sqlite3_close(self.connection)
 	}
 
+	/**
+		Access or create the `sqlite3_stmt` associated with the given query.
+
+		- Parameter queryString: The query string for `sqlite3_stmt`.
+		- Throws: `SQLiteError` if unable to create the `sqlite3_stmt`.
+		- Note: Before iOS 12.0, tvOS 12.0 and watchOS 5.0 if the statement was not previously created,
+		it will be created using `sqlite3_prepare_v2` and not `sqlite3_prepare_v3`, which is the default behaviour.
+	*/
 	func preparedStatement(forQuery queryString: String) throws -> OpaquePointer {
 		if let preparedStatement = self.preparedStatements[queryString] {
 			return preparedStatement
@@ -57,6 +76,15 @@ public final class SQLiteDatabase : SQLDatabase {
 		}
 	}
 
+	/**
+		Removes all previously prepared `sqlite3_stmt`.
+
+		Empties the `sqlite3_stmt` internal cache. SQLite usually keeps locks on tables while prepared statements
+		use them (eg. create table). This function allows you to purge the cache and thus remove these locks.
+
+		- Note: `SQLStatement`s created from this object are safe from cache purge, as they pick them only when required.
+		- SeeAlso: `statement(query:)`.
+	*/
 	public func removePreparedStatements() {
 		for preparedStatement in self.preparedStatements.values {
 			sqlite3_finalize(preparedStatement)
@@ -65,6 +93,14 @@ public final class SQLiteDatabase : SQLDatabase {
 		self.preparedStatements.removeAll()
 	}
 
+	/**
+		Acquire an `SQLStatement` from this database. The `SQLiteDatabase` handles its cache directly
+		with the `sqlite3_stmt`, but every of these statements hold a strong reference to the database to avoid
+		any misuse.
+
+		- Parameter query: Query source code.
+		- Returns: A newly created `SQLStatement` associated with this object and `query`.
+	*/
 	public func statement(_ query: StaticString) -> SQLStatement {
 		SQLiteStatement(database: self, queryString: String(cString: query.utf8Start))
 	}
