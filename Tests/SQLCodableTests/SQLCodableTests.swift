@@ -7,79 +7,79 @@
 
 @testable import SQLiteCodable
 @testable import SQLCodable
+import Combine
 import XCTest
+
+struct Foo : Codable, Equatable {
+	let key: Int
+	let value: String
+}
+
+struct EquatableError : Error, Equatable {
+	let localizedDescription: String
+}
 
 final class SQLCodableTests: XCTestCase {
 
-	func testREADME() {
-		do {
-			let studentDAO = try StudentDAO(database: SQLiteDatabase())
+	private func testSQLiteEmptyRowPublisher(expectation description: String, publisher: AnyPublisher<Void, Error>, storedIn cancellables: inout Set<AnyCancellable>) -> EquatableError? {
+		let expectation = self.expectation(description: description)
+		var failure: EquatableError?
+		publisher.sink(receiveCompletion: { completion in
+				switch completion {
+				case .finished:
+					expectation.fulfill()
+				case .failure(let error):
+					failure = EquatableError(localizedDescription: error.localizedDescription)
+				}
+		}, receiveValue: { }).store(in: &cancellables)
+		// SQLite Driver executes the statement synchronously at subscription, no timeout required
+		waitForExpectations(timeout: 0)
+		return failure
+	}
 
-			try studentDAO.add(student: Student(firstname: "Nino", lastname: "Quincampoix", average:  9.0))
-			try studentDAO.add(student: Student(firstname: "Raphaël", lastname: "Poulain", average: 7.0))
-			try studentDAO.add(student: Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0))
-			try studentDAO.add(student: Student(firstname: "Raymond", lastname: "Dufayel", average: 17.0))
-
-			try XCTAssertEqual(studentDAO.findStudent(firstname: "Dominique", lastname: "Bretodeau"),
-							   Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0))
-			try XCTAssertEqual(studentDAO.validStudents(),
-							   [Student(firstname: "Raymond", lastname: "Dufayel", average: 17.0),
-								Student(firstname: "Dominique", lastname: "Bretodeau", average: 12.0)])
-		} catch {
-			XCTFail(error.localizedDescription)
-		}
+	private func testSQLiteRowPublisher<T>(expectation description: String, publisher: AnyPublisher<T, Error>, storedIn cancellables: inout Set<AnyCancellable>) -> Result<T, EquatableError>? where T : Equatable {
+		let expectation = self.expectation(description: description)
+		var result: Result<T, EquatableError>?
+		publisher.sink(receiveCompletion: { completion in
+				switch completion {
+				case .finished:
+					expectation.fulfill()
+				case .failure(let error):
+					result = .failure(EquatableError(localizedDescription: error.localizedDescription))
+				}
+		}, receiveValue: { result = .success($0) }).store(in: &cancellables)
+		// SQLite Driver executes the statement synchronously at subscription, no timeout required
+		waitForExpectations(timeout: 0)
+		return result
 	}
 
 	func testSQLite() {
 		do {
+			var cancellables = Set<AnyCancellable>()
 			let database = try SQLiteDatabase()
 
-			// Creating table
-			let create = database.statement("create table if not exists test_statement(key int primary key, value text)")
-			try create.reset()
-			try create.nextRow()
+			XCTAssertNil(self.testSQLiteEmptyRowPublisher(expectation: "Create Table", publisher: database.emptyRowPublisher(query: "create table if not exists test_statement(key int primary key, value text)"), storedIn: &cancellables))
 
-			// Few manipulations
-			let insert = database.statement("insert into test_statement values (:key, :value)")
-			let read = database.statement("select key, value from test_statement where key = ?1")
-			let update = database.statement("update test_statement set value = :value where key = :key")
-			let delete = database.statement("delete from test_statement where key = ?1")
-	
-			try insert.reset(withParameters: Foo(key: 1, value: "bar"))
-			try insert.nextRow()
-	
-			try read.reset(withParameters: 1)
-			guard let foo1: Foo = try read.nextRow() else {
-				XCTFail("Unable to read Foo 1")
-				return
-			}
-	
-			try update.reset(withParameters: ["key" : String(foo1.key), "value" : "nop"])
-			try update.nextRow()
-	
-			try read.reset(withParameters: 1)
-			guard let foo2: Foo = try read.nextRow() else {
-				XCTFail("Unable to read Foo 2")
-				return
-			}
-	
-			try delete.reset(withParameters: foo2.key)
-			try delete.nextRow()
+			XCTAssertNil(self.testSQLiteEmptyRowPublisher(expectation: "Insert into", publisher: database.emptyRowPublisher(query: "insert into test_statement values (:key, :value)", with: Foo(key: 1, value: "bar")), storedIn: &cancellables))
 
-			database.removePreparedStatements() // SQLite is a bit paranoid and locks a table as long as there are prepared statements using it.
+			let selectPublisher: AnyPublisher<Foo, Error> = database.rowPublisher(query: "select key, value from test_statement where key = ?1", with: 1)
+			XCTAssertEqual(self.testSQLiteRowPublisher(expectation: "Select 1", publisher: selectPublisher, storedIn: &cancellables), .success(Foo(key: 1, value: "bar")))
 
-			// Destroying table
-			let destroy = database.statement("drop table if exists test_statement")
-			try destroy.reset()
-			try destroy.nextRow()
+			XCTAssertNil(self.testSQLiteEmptyRowPublisher(expectation: "Update", publisher: database.emptyRowPublisher(query: "update test_statement set value = :value where key = :key", with: ["key": "1", "value" : "nop"]), storedIn: &cancellables))
 
+			XCTAssertEqual(self.testSQLiteRowPublisher(expectation: "Select 2", publisher: selectPublisher, storedIn: &cancellables), .success(Foo(key: 1, value: "nop")))
+
+			XCTAssertNil(self.testSQLiteEmptyRowPublisher(expectation: "Delete", publisher: database.emptyRowPublisher(query: "delete from test_statement where key = ?1", with: 1), storedIn: &cancellables))
+
+			XCTAssertEqual(self.testSQLiteRowPublisher(expectation: "Select 3", publisher: selectPublisher, storedIn: &cancellables), nil)
+
+			XCTAssertNil(self.testSQLiteEmptyRowPublisher(expectation: "Drop", publisher: database.emptyRowPublisher(query: "drop table test_statement"), storedIn: &cancellables))
 		} catch {
 			XCTFail(error.localizedDescription)
 		}
 	}
 
 	static var allTests = [
-		("testREADME", testREADME),
 		("testSQLite", testSQLite),
 	]
 }
